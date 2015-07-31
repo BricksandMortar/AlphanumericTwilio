@@ -118,7 +118,7 @@ namespace Rock.Communication.Medium
                     .ToList() )
                 {
                     var person = recipient.PersonAlias.Person;
-                    if ( person.IsDeceased ?? false )
+                    if ( person.IsDeceased )
                     {
                         recipient.Status = CommunicationRecipientStatus.Failed;
                         recipient.StatusNote = "Person is deceased!";

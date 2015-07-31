@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Linq;
+using System.Net.Mail;
 using System.Text;
 
 using Rock.Attribute;
@@ -235,6 +236,75 @@ namespace Rock.Communication.Transport
         /// <param name="themeRoot">The theme root.</param>
         /// <exception cref="System.NotImplementedException"></exception>
         public override void Send( List<string> recipients, string from, string subject, string body, string appRoot = null, string themeRoot = null )
+        {
+            try
+            {
+                var globalAttributes = GlobalAttributesCache.Read();
+
+                string fromValue = from;
+                if ( !string.IsNullOrWhiteSpace( fromValue ) )
+                {
+                    string accountSid = GetAttributeValue( "SID" );
+                    string authToken = GetAttributeValue( "Token" );
+                    var twilio = new TwilioRestClient( accountSid, authToken );
+
+                    StringBuilder messageBuilder = new StringBuilder( body );
+                    messageBuilder.Append( string.Format( "\nThis message was sent by {0} from a no reply number. To reply to this message send your response to {1}.", Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" ), Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationPhone" ) ) );
+                    string message = messageBuilder.ToString();
+                    if ( !string.IsNullOrWhiteSpace( themeRoot ) )
+                    {
+                        message = message.Replace( "~~/", themeRoot );
+                    }
+
+                    if ( !string.IsNullOrWhiteSpace( appRoot ) )
+                    {
+                        message = message.Replace( "~/", appRoot );
+                        message = message.Replace( @" src=""/", @" src=""" + appRoot );
+                        message = message.Replace( @" href=""/", @" href=""" + appRoot );
+                    }
+
+                    foreach ( var recipient in recipients )
+                    {
+                        var response = twilio.SendMessage( fromValue, recipient, message );
+                    }
+                }
+            }
+
+            catch ( Exception ex )
+            {
+                ExceptionLogService.LogException( ex, null );
+            }
+        }
+
+        /// <summary>
+        /// Sends the specified recipients.
+        /// </summary>
+        /// <param name="recipients">The recipients.</param>
+        /// <param name="from">From.</param>
+        /// <param name="subject">The subject.</param>
+        /// <param name="body">The body.</param>
+        /// <param name="appRoot">The application root.</param>
+        /// <param name="themeRoot">The theme root.</param>
+        /// <param name="attachments">Attachments.</param>
+        /// <exception cref="System.NotImplementedException"></exception>
+        public override void Send( List<string> recipients, string from, string subject, string body, string appRoot = null, string themeRoot = null, List<Attachment> attachments = null )
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Sends the specified recipients.
+        /// </summary>
+        /// <param name="recipients">The recipients.</param>
+        /// <param name="from">From.</param>
+        /// <param name="fromName">From name.</param>
+        /// <param name="subject">The subject.</param>
+        /// <param name="body">The body.</param>
+        /// <param name="appRoot">The application root.</param>
+        /// <param name="themeRoot">The theme root.</param>
+        /// <param name="attachments">The attachments.</param>
+        /// <exception cref="System.NotImplementedException"></exception>
+        public override void Send( List<string> recipients, string from, string fromName, string subject, string body, string appRoot = null, string themeRoot = null, List<Attachment> attachments = null )
         {
             throw new NotImplementedException();
         }
