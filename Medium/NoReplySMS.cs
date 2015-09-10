@@ -60,7 +60,7 @@ namespace Rock.Communication.Medium
                 }
             }
 
-            string message = communication.GetMediumDataValue( "Message" );
+            string message = communication.GetMediumDataValue( "NoReply_Message" );
             return message.ResolveMergeFields( mergeValues );
         }
 
@@ -73,8 +73,8 @@ namespace Rock.Communication.Medium
         {
             StringBuilder sb = new StringBuilder();
 
-            AppendMediumData( communication, sb, "FromValue" );
-            AppendMediumData( communication, sb, "Message" );
+            AppendMediumData( communication, sb, "NoReply_FromValue" );
+            AppendMediumData( communication, sb, "NoReply_Message" );
             return sb.ToString();
         }
 

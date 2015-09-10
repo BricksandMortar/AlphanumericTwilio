@@ -44,7 +44,7 @@ namespace Rock.Communication.Transport
                     (!communication.FutureSendDateTime.HasValue || communication.FutureSendDateTime.Value.CompareTo( RockDateTime.Now ) <= 0) )
                 {
                     // Remove all non alpha numeric from fromValue
-                    string fromValue = new string( communication.GetMediumDataValue( "FromValue" ).Where( c => char.IsLetterOrDigit( c ) || char.IsWhiteSpace( c ) ).ToArray() );
+                    string fromValue = new string( communication.GetMediumDataValue( "NoReply_FromValue" ).Where( c => char.IsLetterOrDigit( c ) || char.IsWhiteSpace( c ) ).ToArray() );
 
                     if ( !string.IsNullOrWhiteSpace( fromValue ) )
                     {
@@ -77,14 +77,14 @@ namespace Rock.Communication.Transport
                                     {
                                         // Create merge field dictionary
                                         var mergeObjects = recipient.CommunicationMergeValues( globalConfigValues );
-                                        StringBuilder messageBuilder = new StringBuilder( communication.GetMediumDataValue( "Message" ) );
-                                        if ( !string.IsNullOrWhiteSpace( communication.GetMediumDataValue( "SenderPhone" ) ) )
+                                        StringBuilder messageBuilder = new StringBuilder( communication.GetMediumDataValue( "NoReply_Message" ) );
+                                        if ( !string.IsNullOrWhiteSpace( communication.GetMediumDataValue( "NoReply_SenderPhone" ) ) )
                                         {
-                                            messageBuilder.Append( string.Format( "\nThis message was sent by {0} on behalf of {1} from a no reply number. To reply to this message send your response to {2}.", communication.GetMediumDataValue( "SenderName" ), Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" ), communication.GetMediumDataValue( "SenderPhone" ) ) );
+                                            messageBuilder.Append( string.Format( "\nThis message was sent by {0} on behalf of {1} from a no reply number. To reply to this message send your response to {2}.", communication.GetMediumDataValue( "NoReply_SenderName" ), Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" ), communication.GetMediumDataValue( "NoReply_SenderPhone" ) ) );
                                         }
                                         else
                                         {
-                                            messageBuilder.Append( string.Format( "\nThis message was sent by {0} on behalf of {1} from a no reply number. To reply to this message contact {0} directly.", communication.GetMediumDataValue( "SenderName" ), Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" ) ) );
+                                            messageBuilder.Append( string.Format( "\nThis message was sent by {0} on behalf of {1} from a no reply number. To reply to this message contact {0} directly.", communication.GetMediumDataValue( "NoReply_SenderName" ), Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" ) ) );
                                         }
                                         string message = messageBuilder.ToString();
                                         message = message.ResolveMergeFields( mergeObjects );

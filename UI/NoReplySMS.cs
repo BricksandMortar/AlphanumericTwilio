@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
-using Rock.Field;
 using Rock.Model;
-using Rock.Web.Cache;
 
 namespace Rock.Web.UI.Controls.Communication
 {
@@ -55,28 +52,26 @@ namespace Rock.Web.UI.Controls.Communication
                 var data = new Dictionary<string, string>();
                 if ( !UseSimpleMode )
                 {
-                    data.Add( "FromValue", tbFrom.Text );
-                    data.Add( "Subject", tbFrom.Text != null ? ("From: " + tbFrom.Text) : string.Empty );
+                    data.Add( "NoReply_FromValue", tbFrom.Text );
                 }
                 else
                 {
-                    data.Add( "FromValue", lFrom.Text );
-                    data.Add( "Subject", lFrom.Text != null ? ("From: " + lFrom.Text) : string.Empty );
+                    data.Add( "NoReply_FromValue", lFrom.Text );
                 }
-                data.Add( "Message", tbMessage.Text );
-                data.Add( "SenderName", hfSenderName.Value );
-                data.Add( "SenderPhone", hfSenderPhone.Value );
+                data.Add( "NoReply_Message", tbMessage.Text );
+                data.Add( "NoReply_SenderName", hfSenderName.Value );
+                data.Add( "NoReply_SenderPhone", hfSenderPhone.Value );
                 return data;
             }
 
             set
             {
                 EnsureChildControls();
-                lFrom.Text = GetDataValue( value, "FromValue" );
-                tbFrom.Text = GetDataValue( value, "FromValue" );
-                tbMessage.Text = GetDataValue( value, "Message" );
-                hfSenderName.Value = GetDataValue( value, "SenderName" );
-                hfSenderPhone.Value = GetDataValue( value, "SenderPhone" );
+                lFrom.Text = GetDataValue( value, "NoReply_FromValue" );
+                tbFrom.Text = GetDataValue( value, "NoReply_FromValue" );
+                tbMessage.Text = GetDataValue( value, "NoReply_Message" );
+                hfSenderName.Value = GetDataValue( value, "NoReply_SenderName" );
+                hfSenderPhone.Value = GetDataValue( value, "NoReply_SenderPhone" );
             }
         }
 
