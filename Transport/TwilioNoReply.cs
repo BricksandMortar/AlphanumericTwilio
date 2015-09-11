@@ -249,7 +249,7 @@ namespace Rock.Communication.Transport
                     var twilio = new TwilioRestClient( accountSid, authToken );
 
                     StringBuilder messageBuilder = new StringBuilder( body );
-                    messageBuilder.Append( string.Format( "\nThis message was sent by {0} from a no reply number. To reply to this message send your response to {1}.", Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" ), Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationPhone" ) ) );
+                    messageBuilder.Append( string.Format( "\nThis message was sent by {0} from a no reply number.", Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" ) ) );
                     string message = messageBuilder.ToString();
                     if ( !string.IsNullOrWhiteSpace( themeRoot ) )
                     {
