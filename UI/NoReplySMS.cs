@@ -17,6 +17,7 @@ namespace Rock.Web.UI.Controls.Communication
 
         private RockTextBox tbFrom;
         private RockLiteral lFrom;
+        private RockCheckBox cbAppendUserInfo;
         private RockControlWrapper rcwMessage;
         private MergeFieldPicker mfpMessage;
         private RockTextBox tbMessage;
@@ -53,10 +54,12 @@ namespace Rock.Web.UI.Controls.Communication
                 if ( !UseSimpleMode )
                 {
                     data.Add( "NoReply_FromValue", tbFrom.Text );
+                    data.Add( "NoReply_AppendUserInfo", cbAppendUserInfo.Checked.ToString() );
                 }
                 else
                 {
                     data.Add( "NoReply_FromValue", lFrom.Text );
+                    data.Add( "NoReply_AppendUserInfo", "True" );
                 }
                 data.Add( "NoReply_Message", tbMessage.Text );
                 data.Add( "NoReply_SenderName", hfSenderName.Value );
@@ -70,6 +73,7 @@ namespace Rock.Web.UI.Controls.Communication
                 lFrom.Text = GetDataValue( value, "NoReply_FromValue" );
                 tbFrom.Text = GetDataValue( value, "NoReply_FromValue" );
                 tbMessage.Text = GetDataValue( value, "NoReply_Message" );
+                cbAppendUserInfo.Checked = GetDataValue( value, "NoReply_AppendUserInfo" ).AsBoolean();
                 hfSenderName.Value = GetDataValue( value, "NoReply_SenderName" );
                 hfSenderPhone.Value = GetDataValue( value, "NoReply_SenderPhone" );
             }
@@ -142,6 +146,13 @@ namespace Rock.Web.UI.Controls.Communication
             tbMessage.Rows = 3;
             rcwMessage.Controls.Add( tbMessage );
 
+            cbAppendUserInfo = new RockCheckBox();
+            cbAppendUserInfo.ID = string.Format( "cbAppendUserInfo_{0}", this.ID );
+            cbAppendUserInfo.Label = "Add contact information to message?";
+            cbAppendUserInfo.Help = "Append your message with name and phone number to allow receipients to contact you?";
+            cbAppendUserInfo.Checked = true;
+            Controls.Add( cbAppendUserInfo );
+
             hfSenderName = new HiddenField();
             hfSenderName.ID = string.Format( "hfSenderName_{0}", this.ID );
             Controls.Add( hfSenderName );
@@ -192,7 +203,7 @@ namespace Rock.Web.UI.Controls.Communication
             {
             }
 
-            hfSenderName.Value = string.Format( sender.NickName + " " + sender.LastName );
+            hfSenderName.Value = sender.FullName;
 
             string organizationName = Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" );
             if ( organizationName.Length > 11 )
@@ -233,6 +244,7 @@ namespace Rock.Web.UI.Controls.Communication
             {
 
                 tbFrom.RenderControl( writer );
+                cbAppendUserInfo.RenderControl( writer );
             }
             else
             {
