@@ -5,19 +5,21 @@ using System.ComponentModel.Composition;
 using System.Linq;
 using System.Text;
 
+using Rock.Communication;
 using Rock.Attribute;
 using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;
 
 using Twilio;
+using Rock;
 
-namespace Rock.Communication.Transport
+namespace com.bricksandmortar.Communication.Transport
 {
     /// <summary>
     /// Communication transport for sending no-reply SMS messages using Twilio
     /// </summary>
-    [Description( "Sends a no-reply communication through Twilio API" )]
+    [Description( "Sends a no reply communication through the Twilio API" )]
     [Export( typeof( TransportComponent ) )]
     [ExportMetadata( "ComponentName", "No-Reply Twilio" )]
     [TextField( "SID", "Your Twilio Account SID (find at https://www.twilio.com/user/account)", true, "", "", 0 )]
@@ -38,8 +40,8 @@ namespace Rock.Communication.Transport
                 communication = new CommunicationService( rockContext ).Get( communication.Id );
 
                 if ( communication != null &&
-                    communication.Status == Model.CommunicationStatus.Approved &&
-                    communication.Recipients.Where( r => r.Status == Model.CommunicationRecipientStatus.Pending ).Any() &&
+                    communication.Status == Rock.Model.CommunicationStatus.Approved &&
+                    communication.Recipients.Where( r => r.Status == Rock.Model.CommunicationRecipientStatus.Pending ).Any() &&
                     (!communication.FutureSendDateTime.HasValue || communication.FutureSendDateTime.Value.CompareTo( RockDateTime.Now ) <= 0) )
                 {
                     // Remove all non alpha numeric from fromValue
@@ -119,7 +121,7 @@ namespace Rock.Communication.Transport
                                                 EntityTypeId = personEntityTypeId,
                                                 CategoryId = communicationCategoryId,
                                                 EntityId = recipient.PersonAlias.PersonId,
-                                                Summary = "Sent No Reply SMS message.",
+                                                Summary = "Sent a no reply SMS message from " + fromValue + ".",
                                                 Caption = message.Truncate( 200 ),
                                                 RelatedEntityTypeId = communicationEntityTypeId,
                                                 RelatedEntityId = communication.Id
@@ -134,7 +136,7 @@ namespace Rock.Communication.Transport
                                     else
                                     {
                                         recipient.Status = CommunicationRecipientStatus.Failed;
-                                        recipient.StatusNote = "No Phone Number with Messaging Enabled";
+                                        recipient.StatusNote = "No phone number with messaging enabled";
                                     }
                                 }
                                 catch ( Exception ex )
