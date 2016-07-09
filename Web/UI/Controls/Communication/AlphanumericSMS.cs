@@ -10,12 +10,12 @@ using Rock.Model;
 using Rock.Web.UI.Controls.Communication;
 using Rock.Web.UI.Controls;
 
-namespace com.bricksandmortar.Web.UI.Controls.Communication
+namespace com.bricksandmortarstudio.Web.UI.Controls.Communication
 {
     /// <summary>
     /// SMS Communication Medium control
     /// </summary>
-    public class NoReplySMS : MediumControl
+    public class AlphanumericSMS : MediumControl
     {
         #region UI Controls
 
@@ -25,8 +25,7 @@ namespace com.bricksandmortar.Web.UI.Controls.Communication
         private RockControlWrapper rcwMessage;
         private MergeFieldPicker mfpMessage;
         private RockTextBox tbMessage;
-        private HiddenField hfSenderPhone;
-        private HiddenField hfSenderName;
+        private HiddenField hfSenderGuid;
 
         #endregion
 
@@ -66,8 +65,7 @@ namespace com.bricksandmortar.Web.UI.Controls.Communication
                     data.Add("NoReply_AppendUserInfo", "True");
                 }
                 data.Add("NoReply_Message", tbMessage.Text);
-                data.Add("NoReply_SenderName", hfSenderName.Value);
-                data.Add("NoReply_SenderPhone", hfSenderPhone.Value);
+                data.Add("SenderGuid", hfSenderGuid.Value );
                 return data;
             }
 
@@ -78,8 +76,7 @@ namespace com.bricksandmortar.Web.UI.Controls.Communication
                 tbFrom.Text = GetDataValue(value, "NoReply_FromValue");
                 tbMessage.Text = GetDataValue(value, "NoReply_Message");
                 cbAppendUserInfo.Checked = GetDataValue(value, "NoReply_AppendUserInfo").AsBoolean();
-                hfSenderName.Value = GetDataValue(value, "NoReply_SenderName");
-                hfSenderPhone.Value = GetDataValue(value, "NoReply_SenderPhone");
+                hfSenderGuid.Value = GetDataValue( value, "SenderGuid" );
             }
         }
 
@@ -90,7 +87,7 @@ namespace com.bricksandmortar.Web.UI.Controls.Communication
         /// <summary>
         /// Initializes a new instance of the <see cref="Email"/> class.
         /// </summary>
-        public NoReplySMS()
+        public AlphanumericSMS()
             : base()
         {
 
@@ -100,7 +97,7 @@ namespace com.bricksandmortar.Web.UI.Controls.Communication
         /// Initializes a new instance of the <see cref="Email"/> class.
         /// </summary>
         /// <param name="useSimpleMode">if set to <c>true</c> [use simple mode].</param>
-        public NoReplySMS(bool useSimpleMode)
+        public AlphanumericSMS(bool useSimpleMode)
             : this()
         {
             UseSimpleMode = useSimpleMode;
@@ -157,13 +154,9 @@ namespace com.bricksandmortar.Web.UI.Controls.Communication
             cbAppendUserInfo.Checked = true;
             Controls.Add(cbAppendUserInfo);
 
-            hfSenderName = new HiddenField();
-            hfSenderName.ID = string.Format("hfSenderName_{0}", this.ID);
-            Controls.Add(hfSenderName);
-
-            hfSenderPhone = new HiddenField();
-            hfSenderPhone.ID = string.Format("hfSenderPhone_{0}", this.ID);
-            Controls.Add(hfSenderPhone);
+            hfSenderGuid = new HiddenField();
+            hfSenderGuid.ID = string.Format( "hfSenderGuid_{0}", this.ID );
+            Controls.Add( hfSenderGuid );
         }
 
         /// <summary>
@@ -196,18 +189,7 @@ namespace com.bricksandmortar.Web.UI.Controls.Communication
         public override void InitializeFromSender(Person sender)
         {
             EnsureChildControls();
-            try
-            {
-                hfSenderPhone.Value = sender.PhoneNumbers
-                .Where(p => p.IsMessagingEnabled == true)
-                .FirstOrDefault()
-                .NumberFormattedWithCountryCode;
-            }
-            catch (Exception)
-            {
-            }
-
-            hfSenderName.Value = sender.FullName;
+            hfSenderGuid.Value = sender.Guid.ToString();
 
             string organizationName = Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted("OrganizationName");
             if (organizationName.Length > 11)
@@ -222,7 +204,6 @@ namespace com.bricksandmortar.Web.UI.Controls.Communication
                     organizationName = organizationName.Replace(" ", string.Empty);
                     organizationName = organizationName.Substring(0, 11);
                 }
-
             }
 
             if (string.IsNullOrWhiteSpace(tbFrom.Text) & !IsTemplate)
@@ -255,8 +236,7 @@ namespace com.bricksandmortar.Web.UI.Controls.Communication
                 lFrom.RenderControl(writer);
             }
             rcwMessage.RenderControl(writer);
-            hfSenderName.RenderControl(writer);
-            hfSenderPhone.RenderControl(writer);
+            hfSenderGuid.RenderControl(writer);
         }
 
         #endregion

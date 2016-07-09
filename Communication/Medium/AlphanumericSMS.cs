@@ -9,15 +9,15 @@ using Rock.Model;
 using Rock.Communication;
 using Rock.Web.UI.Controls.Communication;
 
-namespace com.bricksandmortar.Communication.Medium
+namespace com.bricksandmortarstudio.Communication.Medium
 {
     /// <summary>
-    /// An no-reply SMS communication
+    /// An alphanumeric SMS communication
     /// </summary>
-    [Description("An no reply SMS communication")]
+    [Description("An alphanumeric SMS communication")]
     [Export(typeof(MediumComponent))]
-    [ExportMetadata("ComponentName", "No Reply SMS")]
-    public class NoReplySMS : MediumComponent
+    [ExportMetadata("ComponentName", "Alphanumeric SMS")]
+    public class AlphanumericSMS : MediumComponent
     {
         /// <summary>
         /// Gets the control.
@@ -26,7 +26,7 @@ namespace com.bricksandmortar.Communication.Medium
         /// <returns></returns>
         public override MediumControl GetControl(bool useSimpleMode)
         {
-            return new Rock.Web.UI.Controls.Communication.NoReplySMS(useSimpleMode);
+            return new com.bricksandmortarstudio.Web.UI.Controls.Communication.AlphanumericSMS( useSimpleMode );
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace com.bricksandmortar.Communication.Medium
             communication = new CommunicationService(rockContext).Get(communication.Id);
 
             var globalAttributes = Rock.Web.Cache.GlobalAttributesCache.Read();
-            var mergeValues = Rock.Web.Cache.GlobalAttributesCache.GetMergeFields(null);
+            var mergeValues = Rock.Lava.LavaHelper.GetCommonMergeFields( null );
 
             if (person != null)
             {
@@ -78,6 +78,7 @@ namespace com.bricksandmortar.Communication.Medium
 
             AppendMediumData(communication, sb, "NoReply_FromValue");
             AppendMediumData(communication, sb, "NoReply_Message");
+            AppendMediumData( communication, sb, "SenderGuid" );
             return sb.ToString();
         }
 
@@ -121,7 +122,7 @@ namespace com.bricksandmortar.Communication.Medium
                     .ToList())
                 {
                     var person = recipient.PersonAlias.Person;
-                    if (person.IsDeceased ?? false)
+                    if (person.IsDeceased)
                     {
                         recipient.Status = CommunicationRecipientStatus.Failed;
                         recipient.StatusNote = "Person is deceased!";

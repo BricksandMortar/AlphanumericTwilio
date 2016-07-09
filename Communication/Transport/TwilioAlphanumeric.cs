@@ -14,18 +14,19 @@ using Rock.Web.Cache;
 using Twilio;
 using Rock;
 
-namespace com.bricksandmortar.Communication.Transport
+namespace com.bricksandmortarstudio.Communication.Transport
 {
     /// <summary>
     /// Communication transport for sending no-reply SMS messages using Twilio
     /// </summary>
     [Description( "Sends a no reply communication through the Twilio API" )]
     [Export( typeof( TransportComponent ) )]
-    [ExportMetadata( "ComponentName", "No-Reply Twilio" )]
+    [ExportMetadata( "ComponentName", "Twilio Alphanumeric SMS" )]
     [TextField( "SID", "Your Twilio Account SID (find at https://www.twilio.com/user/account)", true, "", "", 0 )]
     [TextField( "Token", "Your Twilio Account Token", true, "", "", 1 )]
+    [TextField( "Optional Footer", "<span class='tip tip-lava'></span> This footer will automatically be added to all simple mode communications. Use this to provide a way for your recipients to opt-out or as additional context for who is sending the messages.", true, "This message was sent from a no reply number. Contact us on {{ GlobalAttribute.OrganizationPhone }} to opt out of future messages.", key:"footer" )]
 
-    public class TwilioNoReply : TransportComponent
+    public class TwilioAlphanumeric : TransportComponent
     {
         /// <summary>
         /// Sends the specified communication.
@@ -59,8 +60,9 @@ namespace com.bricksandmortar.Communication.Transport
                         var personEntityTypeId = EntityTypeCache.Read( "Rock.Model.Person" ).Id;
                         var communicationEntityTypeId = EntityTypeCache.Read( "Rock.Model.Communication" ).Id;
                         var communicationCategoryId = CategoryCache.Read( Rock.SystemGuid.Category.HISTORY_PERSON_COMMUNICATIONS.AsGuid(), rockContext ).Id;
-
-                        var globalConfigValues = GlobalAttributesCache.GetMergeFields( null );
+                        var currentPerson = communication.CreatedByPersonAlias.Person;
+                        var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( null, currentPerson );
+                        mergeFields.Add( "Sender", currentPerson );
 
                         bool recipientFound = true;
                         while ( recipientFound )
@@ -77,25 +79,19 @@ namespace com.bricksandmortar.Communication.Transport
                                     if ( phoneNumber != null )
                                     {
                                         // Create merge field dictionary
-                                        var mergeObjects = recipient.CommunicationMergeValues( globalConfigValues );
-                                        StringBuilder messageBuilder = new StringBuilder( communication.GetMediumDataValue( "NoReply_Message" ) );
-                                        if ( communication.GetMediumDataValue( "NoReply_AppendUserInfo" ) == "True"  )
+                                        var mergeObjects = recipient.CommunicationMergeValues( mergeFields );
+                                        string message = communication.GetMediumDataValue( "NoReply_Message" );
+                                        string footer = GetAttributeValue( "footer" );
+                                        if ( communication.GetMediumDataValue( "NoReply_AppendUserInfo" ) == "True" && !string.IsNullOrEmpty(footer ) )
                                         {
-                                            if ( !string.IsNullOrWhiteSpace( communication.GetMediumDataValue( "NoReply_SenderPhone" ) ) )
-                                            {
-                                                messageBuilder.Append( string.Format( "\nThis message was sent by {0} on behalf of {1} from a no reply number. To reply to this message send your response to {2}.", communication.GetMediumDataValue( "NoReply_SenderName" ), Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" ), communication.GetMediumDataValue( "NoReply_SenderPhone" ) ) );
-                                            }
-                                            else
-                                            {
-                                                messageBuilder.Append( string.Format( "\nThis message was sent by {0} on behalf of {1} from a no reply number. To reply to this message contact {0} directly.", communication.GetMediumDataValue( "NoReply_SenderName" ), Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" ) ) );
-                                            }
+                                            message += footer;
                                         }
                                         else
                                         {
-                                            messageBuilder.Append( string.Format( "\nThis message was sent by on behalf of {0} from a no reply number.", Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" ) ) );
+                                            message += "\nThis message was sent by on behalf of {{ GlobalAttribute.OrganizationName }} from a no reply number.";
                                         }
 
-                                        string message = messageBuilder.ToString();
+                                        message = message.ReplaceWordChars();
                                         message = message.ResolveMergeFields( mergeObjects );
 
                                         string twilioNumber = phoneNumber.Number;
@@ -109,7 +105,14 @@ namespace com.bricksandmortar.Communication.Transport
 
                                         var response = twilio.SendMessage( fromValue, twilioNumber, message, callbackUrl );
 
-                                        recipient.Status = CommunicationRecipientStatus.Delivered;
+                                        if (response.Status.ToLower() != "Failed"){
+                                            recipient.Status = CommunicationRecipientStatus.Failed; break;
+                                        }
+                                        else
+                                        {
+                                            recipient.Status = CommunicationRecipientStatus.Delivered;
+                                        }
+
                                         recipient.TransportEntityTypeName = this.GetType().FullName;
                                         recipient.UniqueMessageId = response.Sid;
 
@@ -121,7 +124,7 @@ namespace com.bricksandmortar.Communication.Transport
                                                 EntityTypeId = personEntityTypeId,
                                                 CategoryId = communicationCategoryId,
                                                 EntityId = recipient.PersonAlias.PersonId,
-                                                Summary = "Sent a no reply SMS message from " + fromValue + ".",
+                                                Summary = "Sent an alphanumeric SMS message from " + fromValue + ".",
                                                 Caption = message.Truncate( 200 ),
                                                 RelatedEntityTypeId = communicationEntityTypeId,
                                                 RelatedEntityId = communication.Id
@@ -183,40 +186,31 @@ namespace com.bricksandmortar.Communication.Transport
             try
             {
                 var globalAttributes = GlobalAttributesCache.Read();
-
                 string fromValue = string.Empty;
                 mediumData.TryGetValue( "NoReply_FromValue", out fromValue );
                 if ( !string.IsNullOrWhiteSpace( fromValue ) )
                 {
+                    
+                    string senderGuid = string.Empty;
+                    mediumData.TryGetValue("SenderGuid", out senderGuid);
+                    if (!string.IsNullOrWhiteSpace(senderGuid)){
                     string accountSid = GetAttributeValue( "SID" );
                     string authToken = GetAttributeValue( "Token" );
                     var twilio = new TwilioRestClient( accountSid, authToken );
-
-                    string message = string.Empty;
-                    string senderPhone = string.Empty;
-                    string senderName = string.Empty;
-                    string appendUserInfo = string.Empty;
-                    mediumData.TryGetValue( "NoReply_Message", out message );
-                    mediumData.TryGetValue( "NoReply_SenderPhone", out senderPhone );
-                    mediumData.TryGetValue( "NoReply_SenderName", out senderName );
-                    mediumData.TryGetValue( "NoReply_AppendUserInfo", out appendUserInfo );
-                    StringBuilder messageBuilder = new StringBuilder( message );
-                    if ( appendUserInfo == "True" )
+                    var sender = new PersonService(new RockContext()).Get(senderGuid.AsGuid());
+                    var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields(null);
+                    string message = mediumData["NoReply_Message"];
+                    string appendUserInfo = mediumData["NoReply_AppendUserInfo"];
+                    string footer = GetAttributeValue("footer");
+                    if ( appendUserInfo.AsBoolean(false) && !string.IsNullOrEmpty(footer) )
                     {
-                        if ( !string.IsNullOrWhiteSpace( senderPhone ) )
-                        {
-                            messageBuilder.Append( string.Format( "\nThis message was sent by {0} on behalf of {1} from a no reply number. To reply to this message send your response to {2}.", senderName, Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" ), senderPhone ) );
-                        }
-                        else
-                        {
-                            messageBuilder.Append( string.Format( "\nThis message was sent by {0} on behalf of {1} from a no reply number. To reply to this message contact {0} directly.", senderName, Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" ) ) );
-                        }
+                        message += footer; 
                     }
                     else
                     {
-                        messageBuilder.Append( string.Format( "\nThis message was sent by on behalf of {0} from a no reply number.", Rock.Web.Cache.GlobalAttributesCache.Read().GetValueFormatted( "OrganizationName" ) ) );
+                        message += "\nThis message was sent by on behalf of {{ GlobalAttribute.OrganizationName }} from a no reply number.";
                     }
-                    message = messageBuilder.ToString();
+                    message = message.ResolveMergeFields( mergeFields );
 
                     if ( !string.IsNullOrWhiteSpace( themeRoot ) )
                     {
@@ -233,6 +227,7 @@ namespace com.bricksandmortar.Communication.Transport
                     foreach ( var recipient in recipients )
                     {
                         var response = twilio.SendMessage( fromValue, recipient, message );
+                    }
                     }
                 }
             }
@@ -254,6 +249,16 @@ namespace com.bricksandmortar.Communication.Transport
         /// <param name="themeRoot">The theme root.</param>
         /// <exception cref="System.NotImplementedException"></exception>
         public override void Send( List<string> recipients, string from, string subject, string body, string appRoot = null, string themeRoot = null )
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Send( List<string> recipients, string from, string fromName, string subject, string body, string appRoot = null, string themeRoot = null, List<System.Net.Mail.Attachment> attachments = null )
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Send( List<string> recipients, string from, string subject, string body, string appRoot = null, string themeRoot = null, List<System.Net.Mail.Attachment> attachments = null )
         {
             throw new NotImplementedException();
         }
