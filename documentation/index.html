@@ -1,0 +1,39 @@
+---
+layout: default
+title: Documentation
+description: Let's get setup
+download: false
+---
+<section class="bs-docs-section">
+    <h1 id="pluginfunction" class="page-header">What's the Plugin About?</h1>
+    <p>In <a href="https://www.twilio.com/help/faq/sms/what-countries-does-twilio-support-alphanumeric-sender-id">certain countries</a> it's possible to send messages using an alphanumeric sender id. If your region is supported then this plugin let's you send using an alphanumeric id from Rock. It's a great way to use your brand to increase engagement and is suited to large communication blasts as it prevents replies.</p>
+    <p><strong>Note:</strong> This Twilio functionality is not available in the United States or with trial Twilio accounts.</p>
+</section>
+<section class="bs-docs-section">
+    <!-- each section must contain ONE h1 with an id and optionally a "page-header" class -->
+    <h1 id="setup" class="page-header">Setup</h1>
+    <h2 id="setup-twilio-sub">Twilio</h2>
+    <p>Visit <a href="https://twilio.com/console">the Twilio console</a> and note down your Account SID and Auth Token.</p>
+    <a href="#feather-twilio-console" data-featherlight><img src="{{site.github.url}}/assets/images/Documentation/twilio_console.png" class="img-responsive" alt="Twilio Console" id="feather-twilio-console" /></a>
+
+    <h2 id="setup-rock-sub">Rock</h2>
+    <p>To setup the plugin you'll need to enable the Alphanumeric SMS Twilio communcation transport and the Alphanumeric SMS communication medium.</p>
+    <h3>Communication Transport</h3>
+    <p>Visit <span data-type="action">Admin Tools &gt; Communications &gt; Communication Transports</span> and select the Twilio Alphanumeric SMS transport. Paste in your Account Sid and Auth Token and then change the transport to active. The optional footer is appended to all simple mode communications and optionally when selected when sending a communication using the full mode. Use this to provide a way for your users to <a href="https://www.twilio.com/help/faq/sms/what-is-alphanumeric-sender-id-and-how-do-i-get-started">opt out</a> or to contact the sender. This field has access to the Lava context of the person the message is being sent to and the sender.</p>
+    <a href="#feather-rock-transport" data-featherlight><img src="{{site.github.url}}/assets/images/Documentation/rock_transport.png" class="img-responsive" alt="Rock Communication Transport" id="feather-rock-transport" /></a>
+
+    <h3>Communication Medium</h3>
+    <p>Visit <span data-type="action">Admin Tools &gt; Communications &gt; Communication Mediums</span> and select the Alphanumeric SMS medium.Change the medium to active and then select the Twilio Alphanumeric SMS Transport. </p>
+    <a href="#feather-rock-medium" data-featherlight><img src="{{site.github.url}}/assets/images/Documentation/rock_medium.png" class="img-responsive" alt="Rock Communication Medium" id="feather-rock-medium" /></a>
+</section>
+
+<section class="bs-docs-section">
+    <h1 id="developers" class="page-header">Developers</h1>
+    <p>The source code for the
+        {{site.name}}
+        is available
+        <a href="https://github.com/{{site.github.user}}/{{site.github.repo}}/releases/latest">here</a>
+        for use with the
+        <a href="http://www.rockrms.com/Rock/Developer">Rockit SDK</a>
+    </p>.
+</section>

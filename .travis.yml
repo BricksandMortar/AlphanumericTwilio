@@ -1,0 +1,20 @@
+language: ruby
+rvm:
+- 2.2
+before_install:
+  - chmod +x ./script/ciinstall.sh
+#  - npm install
+install: ./script/ciinstall.sh
+before_script:
+  - chmod +x ./script/cibuild.sh
+  - chmod +x ./script/deploy.sh
+  - chmod +x ./script/citest.sh
+script:
+  - ./script/deploy.sh
+branches:
+  only:
+  - pages-ci
+env:
+  global:
+  - NOKOGIRI_USE_SYSTEM_LIBRARIES=true
+  - secure: J/Fxv1yUjUexnRJDpZmJfVEEmV8MFa1GY6lUMhM9DAp5VaqljFv7BozAfAYNOi8ciB5snN/x6rbD8M6BswxlCjuUkW/AF3aEwvB1q+rh3m32C2R1CQygxU4jaOD1lz7p61uoqSPFqgH6tWfCk0oOrZ1TCxAq92CWOlOIVLzdi/qKCf46f5n/CNIk+8+GnjiSZ+TlYIJMmP7hcZHQzBzmNub+r/rVzbxY8C77w5GZsjZX/PksuQCjg93d9y8mwsVol/gwioDTnnWrEq66upoTac/mPpXkwBezBkFrhOBYFAEC0uo/2HVzPr9y1xtjmLmbXMoqQTc0/WYbaNrv2jOAtvbZiOidEQEUnsUQGgRuYKZ0RD+MED1Jo4H8mW2DwQML0ANPvHB/gLpREUZL49XftQ6Fb7nKKFzBvAj+iUADxLd2JHO33snq9bte73ljUSn9lhsIpi4ZFtIjGvKSlxsQJLwW6nn81bncc3zWpgpZMGvMAXmq/SRIh/fFuTvvMcGGRuzlepU4+jtmRXTPz5zkKdHh6V1lkMavQZSSXbXOJia1vs2ZPhAoGV3euVIHPgKAO93qNbSRpev8cN/Px/osj4FXeKqyBeWRZPEoMXRTfaxlQImxmkOngt9XT9Vvw/e8WPt4aoaUGMyZDS4pQM/R1JV/I1Wbv6HypecyOhqyF2I=
