@@ -61,7 +61,7 @@ namespace com.bricksandmortarstudio.Communication.Transport
                         var communicationEntityTypeId = EntityTypeCache.Read( "Rock.Model.Communication" ).Id;
                         var communicationCategoryId = CategoryCache.Read( Rock.SystemGuid.Category.HISTORY_PERSON_COMMUNICATIONS.AsGuid(), rockContext ).Id;
                         var currentPerson = communication.CreatedByPersonAlias.Person;
-                        var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( null, currentPerson );
+                        var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( null );
                         mergeFields.Add( "Sender", currentPerson );
 
                         bool recipientFound = true;
@@ -82,13 +82,13 @@ namespace com.bricksandmortarstudio.Communication.Transport
                                         var mergeObjects = recipient.CommunicationMergeValues( mergeFields );
                                         string message = communication.GetMediumDataValue( "NoReply_Message" );
                                         string footer = GetAttributeValue( "footer" );
-                                        if ( communication.GetMediumDataValue( "NoReply_AppendUserInfo" ) == "True" && !string.IsNullOrEmpty(footer ) )
+                                        if ( communication.GetMediumDataValue( "NoReply_AppendUserInfo" ).AsBoolean(false) && !string.IsNullOrEmpty(footer ) )
                                         {
                                             message += footer;
                                         }
                                         else
                                         {
-                                            message += "\nThis message was sent by on behalf of {{ GlobalAttribute.OrganizationName }} from a no reply number.";
+                                            message += "\nThis message was sent on behalf of {{ GlobalAttribute.OrganizationName }} from a no reply number.";
                                         }
 
                                         message = message.ReplaceWordChars();
@@ -208,7 +208,7 @@ namespace com.bricksandmortarstudio.Communication.Transport
                     }
                     else
                     {
-                        message += "\nThis message was sent by on behalf of {{ GlobalAttribute.OrganizationName }} from a no reply number.";
+                        message += "\nThis message was sent on behalf of {{ GlobalAttribute.OrganizationName }} from a no reply number.";
                     }
                     message = message.ResolveMergeFields( mergeFields );
 

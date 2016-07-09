@@ -31,8 +31,17 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EntityFramework">
-      <HintPath>..\Github\bricksandmortarstudio.com_Rockit\RockWeb\Bin\EntityFramework.dll</HintPath>
+    <Reference Include="DotLiquid, Version=1.0.0.0, Culture=neutral, PublicKeyToken=82e46016ecf9f07c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Github\RockWeb\Bin\DotLiquid.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Github\RockWeb\Bin\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="Rock, Version=1.5.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Github\RockWeb\Bin\Rock.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -43,8 +52,9 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Twilio.Api">
-      <HintPath>..\Github\bricksandmortarstudio.com_Rockit\RockWeb\Bin\Twilio.Api.dll</HintPath>
+    <Reference Include="Twilio.Api, Version=3.4.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Github\RockWeb\Bin\Twilio.Api.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -52,16 +62,6 @@
     <Compile Include="Communication\Transport\TwilioAlphanumeric.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Web\UI\Controls\Communication\AlphanumericSMS.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Github\Rock\DotLiquid\DotLiquid.csproj">
-      <Project>{cb9372cd-9c1d-47ab-92d8-702d4d68324f}</Project>
-      <Name>DotLiquid</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Github\Rock\Rock\Rock.csproj">
-      <Project>{8f8c2a79-24f4-4157-8b99-45f75fa85799}</Project>
-      <Name>Rock</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
