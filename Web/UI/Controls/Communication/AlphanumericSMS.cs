@@ -149,8 +149,8 @@ namespace com.bricksandmortarstudio.Web.UI.Controls.Communication
 
             cbAppendUserInfo = new RockCheckBox();
             cbAppendUserInfo.ID = string.Format("cbAppendUserInfo_{0}", this.ID);
-            cbAppendUserInfo.Label = "Add contact information to message?";
-            cbAppendUserInfo.Help = "Append your message with name and phone number to allow receipients to contact you?";
+            cbAppendUserInfo.Label = "Add organisation footer to message?";
+            cbAppendUserInfo.Help = "Append your message with your organisation's custom mesage or just the name of your organisation?";
             cbAppendUserInfo.Checked = true;
             Controls.Add(cbAppendUserInfo);
 
