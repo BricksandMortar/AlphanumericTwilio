@@ -178,3 +178,12 @@ $RECYCLE.BIN/
 # Visual Studio 2014 CTP
 **/*.sln.ide
 *.sln
+_site/
+assets/
+apple-touch-icon-*
+Gemfile.lock
+_layouts/
+favicon*
+script/
+mstile-144x144.png
+mstile-310x310.png
