@@ -14,9 +14,9 @@ namespace com.bricksandmortarstudio.Communication.Medium
     /// <summary>
     /// An alphanumeric SMS communication
     /// </summary>
-    [Description("An alphanumeric SMS communication")]
-    [Export(typeof(MediumComponent))]
-    [ExportMetadata("ComponentName", "Alphanumeric SMS")]
+    [Description( "An alphanumeric SMS communication" )]
+    [Export( typeof( MediumComponent ) )]
+    [ExportMetadata( "ComponentName", "Alphanumeric SMS" )]
     public class AlphanumericSMS : MediumComponent
     {
         /// <summary>
@@ -24,7 +24,7 @@ namespace com.bricksandmortarstudio.Communication.Medium
         /// </summary>
         /// <param name="useSimpleMode">if set to <c>true</c> [use simple mode].</param>
         /// <returns></returns>
-        public override MediumControl GetControl(bool useSimpleMode)
+        public override MediumControl GetControl( bool useSimpleMode )
         {
             return new com.bricksandmortarstudio.Web.UI.Controls.Communication.AlphanumericSMS( useSimpleMode );
         }
@@ -35,36 +35,36 @@ namespace com.bricksandmortarstudio.Communication.Medium
         /// <param name="communication">The communication.</param>
         /// <param name="person">The person.</param>
         /// <returns></returns>
-        public override string GetHtmlPreview(Rock.Model.Communication communication, Person person)
+        public override string GetHtmlPreview( Rock.Model.Communication communication, Person person )
         {
             var rockContext = new RockContext();
 
             // Requery the Communication object
-            communication = new CommunicationService(rockContext).Get(communication.Id);
+            communication = new CommunicationService( rockContext ).Get( communication.Id );
 
             var globalAttributes = Rock.Web.Cache.GlobalAttributesCache.Read();
-            var mergeValues = Rock.Lava.LavaHelper.GetCommonMergeFields( null );
+            var mergeValues = Rock.Web.Cache.GlobalAttributesCache.GetMergeFields( null );
 
-            if (person != null)
+            if ( person != null )
             {
-                mergeValues.Add("Person", person);
+                mergeValues.Add( "Person", person );
 
-                var recipient = communication.Recipients.Where(r => r.PersonAlias != null && r.PersonAlias.PersonId == person.Id).FirstOrDefault();
-                if (recipient != null)
+                var recipient = communication.Recipients.Where( r => r.PersonAlias != null && r.PersonAlias.PersonId == person.Id ).FirstOrDefault();
+                if ( recipient != null )
                 {
                     // Add any additional merge fields created through a report
-                    foreach (var mergeField in recipient.AdditionalMergeValues)
+                    foreach ( var mergeField in recipient.AdditionalMergeValues )
                     {
-                        if (!mergeValues.ContainsKey(mergeField.Key))
+                        if ( !mergeValues.ContainsKey( mergeField.Key ) )
                         {
-                            mergeValues.Add(mergeField.Key, mergeField.Value);
+                            mergeValues.Add( mergeField.Key, mergeField.Value );
                         }
                     }
                 }
             }
 
-            string message = communication.GetMediumDataValue("NoReply_Message");
-            return message.ResolveMergeFields(mergeValues);
+            string message = communication.GetMediumDataValue( "NoReply_Message" );
+            return message.ResolveMergeFields( mergeValues );
         }
 
         /// <summary>
@@ -72,57 +72,57 @@ namespace com.bricksandmortarstudio.Communication.Medium
         /// </summary>
         /// <param name="communication">The communication.</param>
         /// <returns></returns>
-        public override string GetMessageDetails(Rock.Model.Communication communication)
+        public override string GetMessageDetails( Rock.Model.Communication communication )
         {
             StringBuilder sb = new StringBuilder();
 
-            AppendMediumData(communication, sb, "NoReply_FromValue");
-            AppendMediumData(communication, sb, "NoReply_Message");
+            AppendMediumData( communication, sb, "NoReply_FromValue" );
+            AppendMediumData( communication, sb, "NoReply_Message" );
             AppendMediumData( communication, sb, "SenderGuid" );
             return sb.ToString();
         }
 
-        private void AppendMediumData(Rock.Model.Communication communication, StringBuilder sb, string key)
+        private void AppendMediumData( Rock.Model.Communication communication, StringBuilder sb, string key )
         {
-            string value = communication.GetMediumDataValue(key);
-            if (!string.IsNullOrWhiteSpace(value))
+            string value = communication.GetMediumDataValue( key );
+            if ( !string.IsNullOrWhiteSpace( value ) )
             {
-                AppendMediumData(sb, key, value);
+                AppendMediumData( sb, key, value );
             }
         }
 
-        private void AppendMediumData(StringBuilder sb, string key, string value)
+        private void AppendMediumData( StringBuilder sb, string key, string value )
         {
-            sb.AppendFormat("<div class='form-group'><label class='control-label'>{0}</label><p class='form-control-static'>{1}</p></div>",
-                key.SplitCase(), value);
+            sb.AppendFormat( "<div class='form-group'><label class='control-label'>{0}</label><p class='form-control-static'>{1}</p></div>",
+                key.SplitCase(), value );
         }
 
         /// <summary>
         /// Sends the specified communication.
         /// </summary>
         /// <param name="communication">The communication.</param>
-        public override void Send(Rock.Model.Communication communication)
+        public override void Send( Rock.Model.Communication communication )
         {
             var rockContext = new RockContext();
-            var communicationService = new CommunicationService(rockContext);
+            var communicationService = new CommunicationService( rockContext );
 
-            communication = communicationService.Get(communication.Id);
+            communication = communicationService.Get( communication.Id );
 
-            if (communication != null &&
+            if ( communication != null &&
                 communication.Status == Rock.Model.CommunicationStatus.Approved &&
-                communication.Recipients.Where(r => r.Status == Rock.Model.CommunicationRecipientStatus.Pending).Any() &&
-                (!communication.FutureSendDateTime.HasValue || communication.FutureSendDateTime.Value.CompareTo(RockDateTime.Now) <= 0))
+                communication.Recipients.Where( r => r.Status == Rock.Model.CommunicationRecipientStatus.Pending ).Any() &&
+                ( !communication.FutureSendDateTime.HasValue || communication.FutureSendDateTime.Value.CompareTo( RockDateTime.Now ) <= 0 ) )
             {
                 // Update any recipients that should not get sent the communication
-                var recipientService = new CommunicationRecipientService(rockContext);
-                foreach (var recipient in recipientService.Queryable("PersonAlias.Person")
-                    .Where(r =>
-                       r.CommunicationId == communication.Id &&
-                       r.Status == CommunicationRecipientStatus.Pending)
-                    .ToList())
+                var recipientService = new CommunicationRecipientService( rockContext );
+                foreach ( var recipient in recipientService.Queryable( "PersonAlias.Person" )
+                    .Where( r =>
+                        r.CommunicationId == communication.Id &&
+                        r.Status == CommunicationRecipientStatus.Pending )
+                    .ToList() )
                 {
                     var person = recipient.PersonAlias.Person;
-                    if (person.IsDeceased)
+                    if ( person.IsDeceased )
                     {
                         recipient.Status = CommunicationRecipientStatus.Failed;
                         recipient.StatusNote = "Person is deceased!";
@@ -132,7 +132,7 @@ namespace com.bricksandmortarstudio.Communication.Medium
                 rockContext.SaveChanges();
             }
 
-            base.Send(communication);
+            base.Send( communication );
         }
 
         /// <summary>

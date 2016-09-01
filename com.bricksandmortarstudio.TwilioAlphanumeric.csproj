@@ -31,17 +31,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DotLiquid, Version=1.0.0.0, Culture=neutral, PublicKeyToken=82e46016ecf9f07c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Github\RockWeb\Bin\DotLiquid.dll</HintPath>
+    <Reference Include="DotLiquid">
+      <HintPath>..\bricksandmortarstudio.com_Rockit_v4\RockWeb\Bin\DotLiquid.dll</HintPath>
     </Reference>
-    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Github\RockWeb\Bin\EntityFramework.dll</HintPath>
+    <Reference Include="EntityFramework">
+      <HintPath>..\bricksandmortarstudio.com_Rockit_v4\RockWeb\Bin\EntityFramework.dll</HintPath>
     </Reference>
-    <Reference Include="Rock, Version=1.5.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Github\RockWeb\Bin\Rock.dll</HintPath>
+    <Reference Include="Rock">
+      <HintPath>..\bricksandmortarstudio.com_Rockit_v4\RockWeb\Bin\Rock.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -52,9 +49,8 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Twilio.Api, Version=3.4.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Github\RockWeb\Bin\Twilio.Api.dll</HintPath>
+    <Reference Include="Twilio.Api">
+      <HintPath>..\bricksandmortarstudio.com_Rockit_v4\RockWeb\Bin\Twilio.Api.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
