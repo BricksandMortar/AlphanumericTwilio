@@ -41,28 +41,30 @@ namespace com.bricksandmortarstudio.Communication.Transport
                 communication = new CommunicationService( rockContext ).Get( communication.Id );
 
                 if ( communication != null &&
-                    communication.Status == Rock.Model.CommunicationStatus.Approved &&
-                    communication.Recipients.Where( r => r.Status == Rock.Model.CommunicationRecipientStatus.Pending ).Any() &&
+                    communication.Status == CommunicationStatus.Approved &&
+                    communication.Recipients.Where( r => r.Status == CommunicationRecipientStatus.Pending ).Any() &&
                     ( !communication.FutureSendDateTime.HasValue || communication.FutureSendDateTime.Value.CompareTo( RockDateTime.Now ) <= 0 ) )
                 {
                     // Remove all non alpha numeric from fromValue
-                    string fromValue = new string( communication.GetMediumDataValue( "NoReply_FromValue" ).Where( c => char.IsLetterOrDigit( c ) || char.IsWhiteSpace( c ) ).ToArray() );
-
-                    if ( !string.IsNullOrWhiteSpace( fromValue ) )
+                    string fromValue = communication.GetMediumDataValue( "NoReply_FromValue" ).ToCharArray().Where( c => char.IsLetterOrDigit( c ) || char.IsWhiteSpace( c ) ).ToString();
+                    string senderGuid = communication.GetMediumDataValue( "SenderGuid" );
+                    if ( !string.IsNullOrWhiteSpace( fromValue ) && !string.IsNullOrWhiteSpace( senderGuid ) )
                     {
                         string accountSid = GetAttributeValue( "SID" );
                         string authToken = GetAttributeValue( "Token" );
                         var twilio = new TwilioRestClient( accountSid, authToken );
-
                         var historyService = new HistoryService( rockContext );
                         var recipientService = new CommunicationRecipientService( rockContext );
 
                         var personEntityTypeId = EntityTypeCache.Read( "Rock.Model.Person" ).Id;
                         var communicationEntityTypeId = EntityTypeCache.Read( "Rock.Model.Communication" ).Id;
                         var communicationCategoryId = CategoryCache.Read( Rock.SystemGuid.Category.HISTORY_PERSON_COMMUNICATIONS.AsGuid(), rockContext ).Id;
-                        var currentPerson = communication.CreatedByPersonAlias.Person;
+                        var sender = new PersonService( rockContext ).Get( senderGuid.AsGuid() );
                         var mergeFields = Rock.Web.Cache.GlobalAttributesCache.GetMergeFields( null );
-                        mergeFields.Add( "Sender", currentPerson );
+                        if ( sender != null )
+                        {
+                            mergeFields.Add( "Sender", sender );
+                        }
 
                         bool recipientFound = true;
                         while ( recipientFound )
@@ -84,11 +86,11 @@ namespace com.bricksandmortarstudio.Communication.Transport
                                         string footer = GetAttributeValue( "footer" );
                                         if ( communication.GetMediumDataValue( "NoReply_AppendUserInfo" ).AsBoolean( false ) && !string.IsNullOrEmpty( footer ) )
                                         {
-                                            message += footer;
+                                            message += "\n " + footer;
                                         }
                                         else
                                         {
-                                            message += "\nThis message was sent on behalf of {{ GlobalAttribute.OrganizationName }} from a no reply number.";
+                                            message += "\n This message was sent on behalf of {{ GlobalAttribute.OrganizationName }} from a no reply number.";
                                         }
 
                                         message = message.ReplaceWordChars();
@@ -105,7 +107,7 @@ namespace com.bricksandmortarstudio.Communication.Transport
 
                                         var response = twilio.SendMessage( fromValue, twilioNumber, message, callbackUrl );
 
-                                        if ( response.Status.ToLower() != "Failed" )
+                                        if ( response.Status.ToLower() == "failed" )
                                         {
                                             recipient.Status = CommunicationRecipientStatus.Failed;
                                             break;
@@ -148,8 +150,8 @@ namespace com.bricksandmortarstudio.Communication.Transport
                                 {
                                     recipient.Status = CommunicationRecipientStatus.Failed;
                                     recipient.StatusNote = "Twilio Exception: " + ex.Message;
+                                    ExceptionLogService.LogException( ex, null );
                                 }
-
                                 rockContext.SaveChanges();
                             }
                             else
@@ -192,45 +194,38 @@ namespace com.bricksandmortarstudio.Communication.Transport
                 mediumData.TryGetValue( "NoReply_FromValue", out fromValue );
                 if ( !string.IsNullOrWhiteSpace( fromValue ) )
                 {
-
-                    string senderGuid = string.Empty;
-                    mediumData.TryGetValue( "SenderGuid", out senderGuid );
-                    if ( !string.IsNullOrWhiteSpace( senderGuid ) )
+                    string accountSid = GetAttributeValue( "SID" );
+                    string authToken = GetAttributeValue( "Token" );
+                    var twilio = new TwilioRestClient( accountSid, authToken );
+                    var mergeFields = Rock.Web.Cache.GlobalAttributesCache.GetMergeFields( null );
+                    string message = mediumData["NoReply_Message"];
+                    string appendUserInfo = mediumData["NoReply_AppendUserInfo"];
+                    string footer = GetAttributeValue( "footer" );
+                    if ( appendUserInfo.AsBoolean( false ) && !string.IsNullOrEmpty( footer ) )
                     {
-                        string accountSid = GetAttributeValue( "SID" );
-                        string authToken = GetAttributeValue( "Token" );
-                        var twilio = new TwilioRestClient( accountSid, authToken );
-                        var sender = new PersonService( new RockContext() ).Get( senderGuid.AsGuid() );
-                        var mergeFields = Rock.Web.Cache.GlobalAttributesCache.GetMergeFields( null );
-                        string message = mediumData["NoReply_Message"];
-                        string appendUserInfo = mediumData["NoReply_AppendUserInfo"];
-                        string footer = GetAttributeValue( "footer" );
-                        if ( appendUserInfo.AsBoolean( false ) && !string.IsNullOrEmpty( footer ) )
-                        {
-                            message += footer;
-                        }
-                        else
-                        {
-                            message += "\nThis message was sent on behalf of {{ GlobalAttribute.OrganizationName }} from a no reply number.";
-                        }
-                        message = message.ResolveMergeFields( mergeFields );
+                        message += footer;
+                    }
+                    else
+                    {
+                        message += "\nThis message was sent on behalf of {{ GlobalAttribute.OrganizationName }} from a no reply number.";
+                    }
+                    message = message.ResolveMergeFields( mergeFields );
 
-                        if ( !string.IsNullOrWhiteSpace( themeRoot ) )
-                        {
-                            message = message.Replace( "~~/", themeRoot );
-                        }
+                    if ( !string.IsNullOrWhiteSpace( themeRoot ) )
+                    {
+                        message = message.Replace( "~~/", themeRoot );
+                    }
 
-                        if ( !string.IsNullOrWhiteSpace( appRoot ) )
-                        {
-                            message = message.Replace( "~/", appRoot );
-                            message = message.Replace( @" src=""/", @" src=""" + appRoot );
-                            message = message.Replace( @" href=""/", @" href=""" + appRoot );
-                        }
+                    if ( !string.IsNullOrWhiteSpace( appRoot ) )
+                    {
+                        message = message.Replace( "~/", appRoot );
+                        message = message.Replace( @" src=""/", @" src=""" + appRoot );
+                        message = message.Replace( @" href=""/", @" href=""" + appRoot );
+                    }
 
-                        foreach ( var recipient in recipients )
-                        {
-                            var response = twilio.SendMessage( fromValue, recipient, message );
-                        }
+                    foreach ( var recipient in recipients )
+                    {
+                        var response = twilio.SendMessage( fromValue, recipient, message );
                     }
                 }
             }
