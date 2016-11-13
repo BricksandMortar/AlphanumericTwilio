@@ -42,25 +42,31 @@ namespace com.bricksandmortarstudio.Communication.Transport
 
                 if ( communication != null &&
                     communication.Status == CommunicationStatus.Approved &&
-                    communication.Recipients.Where( r => r.Status == CommunicationRecipientStatus.Pending ).Any() &&
+                    communication.Recipients.Any(r => r.Status == CommunicationRecipientStatus.Pending) &&
                     ( !communication.FutureSendDateTime.HasValue || communication.FutureSendDateTime.Value.CompareTo( RockDateTime.Now ) <= 0 ) )
                 {
                     // Remove all non alpha numeric from fromValue
-                    string fromValue = communication.GetMediumDataValue( "NoReply_FromValue" ).ToCharArray().Where( c => char.IsLetterOrDigit( c ) || char.IsWhiteSpace( c ) ).ToString();
+                    string fromValue = communication.GetMediumDataValue( "NoReply_FromValue" );
+                    //Ensure that the fromValue is correct
+                    fromValue = new string( fromValue.ToCharArray().Where( c => char.IsLetterOrDigit( c ) || char.IsWhiteSpace( c ) ).Take( 11 ).ToArray() ) ;
                     string senderGuid = communication.GetMediumDataValue( "SenderGuid" );
                     if ( !string.IsNullOrWhiteSpace( fromValue ) && !string.IsNullOrWhiteSpace( senderGuid ) )
                     {
                         string accountSid = GetAttributeValue( "SID" );
                         string authToken = GetAttributeValue( "Token" );
+
+                        if (string.IsNullOrWhiteSpace(accountSid) || string.IsNullOrWhiteSpace(authToken))
+                        {
+                            throw new Exception("Either SID or Token not provided");
+                        }
                         var twilio = new TwilioRestClient( accountSid, authToken );
                         var historyService = new HistoryService( rockContext );
-                        var recipientService = new CommunicationRecipientService( rockContext );
 
-                        var personEntityTypeId = EntityTypeCache.Read( "Rock.Model.Person" ).Id;
-                        var communicationEntityTypeId = EntityTypeCache.Read( "Rock.Model.Communication" ).Id;
-                        var communicationCategoryId = CategoryCache.Read( Rock.SystemGuid.Category.HISTORY_PERSON_COMMUNICATIONS.AsGuid(), rockContext ).Id;
+                        int personEntityTypeId = EntityTypeCache.Read( "Rock.Model.Person" ).Id;
+                        int communicationEntityTypeId = EntityTypeCache.Read( "Rock.Model.Communication" ).Id;
+                        int communicationCategoryId = CategoryCache.Read( Rock.SystemGuid.Category.HISTORY_PERSON_COMMUNICATIONS.AsGuid(), rockContext ).Id;
                         var sender = new PersonService( rockContext ).Get( senderGuid.AsGuid() );
-                        var mergeFields = Rock.Web.Cache.GlobalAttributesCache.GetMergeFields( null );
+                        var mergeFields = GlobalAttributesCache.GetMergeFields( null );
                         if ( sender != null )
                         {
                             mergeFields.Add( "Sender", sender );
@@ -75,8 +81,7 @@ namespace com.bricksandmortarstudio.Communication.Transport
                                 try
                                 {
                                     var phoneNumber = recipient.PersonAlias.Person.PhoneNumbers
-                                        .Where( p => p.IsMessagingEnabled )
-                                        .FirstOrDefault();
+                                        .FirstOrDefault(p => p.IsMessagingEnabled);
 
                                     if ( phoneNumber != null )
                                     {
@@ -84,7 +89,7 @@ namespace com.bricksandmortarstudio.Communication.Transport
                                         var mergeObjects = recipient.CommunicationMergeValues( mergeFields );
                                         string message = communication.GetMediumDataValue( "NoReply_Message" );
                                         string footer = GetAttributeValue( "footer" );
-                                        if ( communication.GetMediumDataValue( "NoReply_AppendUserInfo" ).AsBoolean( false ) && !string.IsNullOrEmpty( footer ) )
+                                        if ( communication.GetMediumDataValue( "NoReply_AppendUserInfo" ).AsBoolean() && !string.IsNullOrEmpty( footer ) )
                                         {
                                             message += "\n " + footer;
                                         }
@@ -102,41 +107,45 @@ namespace com.bricksandmortarstudio.Communication.Transport
                                             twilioNumber = "+" + phoneNumber.CountryCode + phoneNumber.Number;
                                         }
 
-                                        var globalAttributes = Rock.Web.Cache.GlobalAttributesCache.Read();
+                                        var globalAttributes = GlobalAttributesCache.Read();
+                                        if (globalAttributes == null)
+                                        {
+                                            throw  new Exception("Error getting Global Attributes");
+                                        }
                                         string callbackUrl = globalAttributes.GetValue( "PublicApplicationRoot" ) + "Webhooks/Twilio.ashx";
 
                                         var response = twilio.SendMessage( fromValue, twilioNumber, message, callbackUrl );
 
-                                        if ( response.Status.ToLower() == "failed" )
+                                        if (response != null)
                                         {
-                                            recipient.Status = CommunicationRecipientStatus.Failed;
-                                            break;
+                                            recipient.Status = GetCommunicationRecipientStatus(response);
+
+                                            recipient.TransportEntityTypeName = GetType().FullName;
+                                            recipient.UniqueMessageId = response.Sid;
+
+                                            try
+                                            {
+                                                historyService.Add(new History
+                                                {
+                                                    CreatedByPersonAliasId = communication.SenderPersonAliasId,
+                                                    EntityTypeId = personEntityTypeId,
+                                                    CategoryId = communicationCategoryId,
+                                                    EntityId = recipient.PersonAlias.PersonId,
+                                                    Summary = "Sent an alphanumeric SMS message from " + fromValue + ".",
+                                                    Caption = message.Truncate(200),
+                                                    RelatedEntityTypeId = communicationEntityTypeId,
+                                                    RelatedEntityId = communication.Id
+                                                });
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                ExceptionLogService.LogException(ex, null);
+                                            }
                                         }
                                         else
                                         {
-                                            recipient.Status = CommunicationRecipientStatus.Delivered;
-                                        }
-
-                                        recipient.TransportEntityTypeName = this.GetType().FullName;
-                                        recipient.UniqueMessageId = response.Sid;
-
-                                        try
-                                        {
-                                            historyService.Add( new History
-                                            {
-                                                CreatedByPersonAliasId = communication.SenderPersonAliasId,
-                                                EntityTypeId = personEntityTypeId,
-                                                CategoryId = communicationCategoryId,
-                                                EntityId = recipient.PersonAlias.PersonId,
-                                                Summary = "Sent an alphanumeric SMS message from " + fromValue + ".",
-                                                Caption = message.Truncate( 200 ),
-                                                RelatedEntityTypeId = communicationEntityTypeId,
-                                                RelatedEntityId = communication.Id
-                                            } );
-                                        }
-                                        catch ( Exception ex )
-                                        {
-                                            ExceptionLogService.LogException( ex, null );
+                                            recipient.Status = CommunicationRecipientStatus.Failed;
+                                            recipient.StatusNote = "No response from Twilio";
                                         }
 
                                     }
@@ -162,6 +171,15 @@ namespace com.bricksandmortarstudio.Communication.Transport
                     }
                 }
             }
+        }
+
+        private CommunicationRecipientStatus GetCommunicationRecipientStatus(Message response)
+        {
+            if (response.ErrorCode != null || response.RestException != null || (response.Status != null && response.Status.ToLower() == "failed"))
+            {
+                return CommunicationRecipientStatus.Failed;
+            }
+            return CommunicationRecipientStatus.Delivered;
         }
 
         /// <summary>
