@@ -24,7 +24,7 @@ namespace com.bricksandmortarstudio.Communication.Transport
     [ExportMetadata( "ComponentName", "Twilio Alphanumeric SMS" )]
     [TextField( "SID", "Your Twilio Account SID (find at https://www.twilio.com/user/account)", true, "", "", 0 )]
     [TextField( "Token", "Your Twilio Account Token", true, "", "", 1 )]
-    [TextField( "Optional Footer", "<span class='tip tip-lava'>{{Sender}}</span> This footer will automatically be added to all simple mode communications. Use this to provide a way for your recipients to opt-out or as additional context for who is sending the messages.", true, "This message was sent from a no reply number. Contact us on {{ GlobalAttribute.OrganizationPhone }} to opt out of future messages.", key: "footer" )]
+    [TextField( "Optional Footer", "<span class='tip tip-lava'>{{Sender}}</span> This footer will automatically be added to all simple mode communications. Use this to provide a way for your recipients to opt-out or as additional context for who is sending the messages.", true, "This message was sent from a no reply number. Contact us on {{ 'Global' | Attribute:'OrganizationPhone' }} to opt out of future messages.", key: "footer" )]
 
     public class TwilioAlphanumeric : TransportComponent
     {
@@ -95,7 +95,7 @@ namespace com.bricksandmortarstudio.Communication.Transport
                                         }
                                         else
                                         {
-                                            message += "\n This message was sent on behalf of {{ GlobalAttribute.OrganizationName }} from a no reply number.";
+                                            message += "\n This message was sent on behalf of {{ 'Global' | Attribute:'OrganizationName' }} from a no reply number.";
                                         }
 
                                         message = message.ReplaceWordChars();
@@ -225,7 +225,7 @@ namespace com.bricksandmortarstudio.Communication.Transport
                     }
                     else
                     {
-                        message += "\nThis message was sent on behalf of {{ GlobalAttribute.OrganizationName }} from a no reply number.";
+                        message += "\nThis message was sent on behalf of {{ 'Global' | Attribute:'OrganizationName' }} from a no reply number.";
                     }
                     message = message.ResolveMergeFields( mergeFields );
 
